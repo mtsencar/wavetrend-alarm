@@ -1,0 +1,28 @@
+name: WaveTrend Alarm Botu
+
+on:
+  schedule:
+    # Hafta içi her gün ABD borsası kapanışında (TSİ 00:05) otomatik çalıştır
+    - cron: '5 21 * * 1-5'
+  workflow_dispatch: # İstediğin an tek tuşla manuel çalıştırma butonu
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Kütüphaneleri Yükle
+        run: pip install yfinance pandas requests
+
+      - name: WaveTrend Tarayıcıyı Çalıştır
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scanner.py

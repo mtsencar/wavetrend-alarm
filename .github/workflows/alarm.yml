@@ -2,9 +2,9 @@ name: WaveTrend Alarm Botu
 
 on:
   schedule:
-    # Hafta içi her gün ABD borsası kapanışında (TSİ 00:05) otomatik çalıştır
-    - cron: '5 21 * * 1-5'
-  workflow_dispatch: # İstediğin an tek tuşla manuel çalıştırma butonu
+    # Hafta içi her saat başı otomatik kontrol et (Pazartesi - Cuma)
+    - cron: '0 * * * 1-5'
+  workflow_dispatch: # İstediğin an manuel test etme butonu
 
 jobs:
   build:

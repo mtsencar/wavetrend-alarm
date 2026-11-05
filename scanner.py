@@ -33,7 +33,7 @@ def check_signals(symbol="^NDX", name="NAS100 (Günlük)", interval="1d"):
     wt1_curr, wt2_curr = float(df['WT1'].iloc[-1]), float(df['WT2'].iloc[-1])
     price = float(df['Close'].iloc[-1])
 
-    # 1. ASIL AL SİNYALİ: Yeşil çizgi Kırmızıyı YUKARI kesti (Yeşil Nokta Yandı)
+    # 1. KESİŞİM ALARMLARI (Öncelikli Durum)
     if wt1_prev <= wt2_prev and wt1_curr > wt2_curr:
         if wt1_prev <= -50 or wt1_curr <= -50:
             msg = (f"🟢 *{name} - GÜÇLÜ AL SİNYALİ (YEŞİL NOKTA YANDI!)*\n\n"
@@ -46,26 +46,28 @@ def check_signals(symbol="^NDX", name="NAS100 (Günlük)", interval="1d"):
                    f"💵 *Fiyat:* {price:.1f}\n"
                    f"📊 *WT1 (Yeşil):* {wt1_curr:.1f} | *WT2 (Kırmızı):* {wt2_curr:.1f}")
         send_telegram(msg)
+        return
 
-    # 2. HAZIRLIK UYARISI: Aşırı satıma (-53 altına) indi ama henüz kesişmedi
-    elif wt1_prev > -53 and wt1_curr <= -53:
-        msg = (f"⚠️ *{name} - AŞIRI SATIM BÖLGESİNDE (ACELE ETMEYİN!)*\n\n"
-               f"⏳ *Durum:* Yeşil çizgi -53'ün altına indi. Henüz AL sinyali yok, yeşil nokta (kesişim) bekleniyor.\n"
-               f"💵 *Fiyat:* {price:.1f}\n"
-               f"📊 *WT1 (Yeşil):* {wt1_curr:.1f} | *WT2 (Kırmızı):* {wt2_curr:.1f}")
-        send_telegram(msg)
-
-    # 3. SAT SİNYALİ: Aşırı alımda (+53 üstü) aşağı kesişim (Kırmızı Nokta Yandı)
     elif wt1_prev >= wt2_prev and wt1_curr < wt2_curr and wt1_prev >= 50:
         msg = (f"🔴 *{name} - WAVETREND SAT SİNYALİ (KIRMIZI NOKTA!)*\n\n"
                f"📉 *Durum:* Aşırı alım bölgesinde aşağı kesişim gerçekleşti!\n"
                f"💵 *Fiyat:* {price:.1f}\n"
                f"📊 *WT1 (Yeşil):* {wt1_curr:.1f} | *WT2 (Kırmızı):* {wt2_curr:.1f}")
         send_telegram(msg)
+        return
 
-    # Manuel Test Butonuna Basıldığında Güncel Özeti Gönder
+    # 2. AŞIRI SATIM BÖLGESİ RAPORU: -53 ve altındaysa her saat başı kaç olduğunu bildir
+    if wt1_curr <= -53:
+        msg = (f"⚠️ *{name} - AŞIRI SATIM BÖLGESİNDE (SAATLİK RAPOR)*\n\n"
+               f"📉 *WT1 (Yeşil):* {wt1_curr:.1f} | *WT2 (Kırmızı):* {wt2_curr:.1f}\n"
+               f"⏳ *Durum:* Fiyat -53 altında seyretiği için her saat başı güncelleniyor. Kesişim bekleniyor...\n"
+               f"💵 *Fiyat:* {price:.1f}")
+        send_telegram(msg)
+        return
+
+    # 3. MANUEL TEST VEYA DİĞER DURUMLARDA ÇALIŞACAK RAPOR
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-        durum = "⚠️ Aşırı Satımda (Kesişim Bekleniyor)" if wt1_curr <= -53 else ("🔥 Aşırı Alımda" if wt1_curr >= 53 else "Normal Bölgede")
+        durum = "⚠️ Aşırı Satımda (-53 Altı)" if wt1_curr <= -53 else ("🔥 Aşırı Alımda" if wt1_curr >= 53 else "Normal Bölgede")
         yon = "Yukarı (Yeşil > Kırmızı)" if wt1_curr > wt2_curr else "Aşağı (Yeşil < Kırmızı)"
         msg = (f"📊 *GÜNCEL DURUM RAPORU: {name}*\n\n"
                f"💵 *Fiyat:* {price:.1f}\n"
